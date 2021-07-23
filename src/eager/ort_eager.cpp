@@ -5,7 +5,22 @@
 #include "torch/csrc/autograd/python_variable.h"
 #include "ort_backends.h"
 #include "ort_log.h"
+#include "ort_aten.h"
+#include "orttraining/core/framework/ortmodule_graph_builder.h"
+#include "python/onnxruntime_pybind_state_common.h"
+#include "core/dlpack/dlpack_python.h"
 #include "msnpu_ops.h"
+
+namespace onnxruntime{
+namespace python{
+  onnxruntime::Environment& GetEnv();
+  void addGlobalMethods(py::module& m, Environment& env);
+  void addObjectMethods(py::module& m, Environment& env);
+  void addOrtValueMethods(pybind11::module& m);
+  void addIoBindingMethods(pybind11::module& m);
+  void addObjectMethodsForTraining(py::module& m);
+}
+}
 
 namespace torch_ort {
 namespace eager {
@@ -54,7 +69,6 @@ PYBIND11_MODULE(torch_ort, torch_ort_module) {
 
     auto msnpu_module = torch_ort_module.def_submodule("msnpu");
     msnpu_module.def("transformer_decoder", &torch_ort::eager::msnpu::transformer_decoder);
-    msnpu_module.def("transformer_decoder_grad", &torch_ort::eager::msnpu::transformer_decoder_grad);
 }
 
 } // namespace eager
