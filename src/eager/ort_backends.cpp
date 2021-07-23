@@ -12,10 +12,16 @@
     std::unique_ptr<onnxruntime::IExecutionProvider> CreateMSNPU_ExecutionProvider();
   }
 
+// Arbitrary
+static constexpr int BaselineOpsetVersion = 1;
+
+// This must be larger than BaselineOpsetVersion
+static constexpr int OpsetVersion = 2;
+
 static onnx::OpSchema CreateTransformerDecoderSchema() {
   onnx::OpSchema schema("TransformerDecoder", "" /* arbitrary filename */, 0 /* arbitrary line number */);
   schema.SetDomain(onnxruntime::kMSDomain);
-  schema.SinceVersion(1 /* arbitrary */);
+  schema.SinceVersion(BaselineOpsetVersion);
   schema.SetDoc("Single Layer of Custom Transformer TNLG");
   schema.Input(0, "X_0", "input embeddings", "T");
   schema.Input(1, "X_1", "normalization weight", "T");
@@ -113,7 +119,7 @@ onnxruntime::ORTInvoker& ORTBackendsManager::GetInvoker(const at::Device device)
 
   // Register schemas for MSNPU ops
   onnxruntime::CustomRegistry customRegistry;
-  auto status = customRegistry.RegisterOpSet({CreateTransformerDecoderSchema()}, onnxruntime::kMSDomain, 1, 2);
+  auto status = customRegistry.RegisterOpSet({CreateTransformerDecoderSchema()}, onnxruntime::kMSDomain, BaselineOpsetVersion, OpsetVersion);
   if(!status.IsOK())
   {
       throw std::runtime_error("ORT return failure status:" + status.ErrorMessage());
