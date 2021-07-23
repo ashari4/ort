@@ -11,51 +11,8 @@
   namespace onnxruntime {
     std::unique_ptr<onnxruntime::IExecutionProvider> CreateMSNPU_ExecutionProvider();
   }
-#endif
 
-//use the environment from python module
-namespace onnxruntime{
-namespace python{
-  onnxruntime::Environment& GetEnv();
-}
-}
-
-namespace torch_ort {
-namespace eager {
-
-using namespace onnxruntime;
-
-ORTBackendsManager& GetORTBackendsManager() {
-  auto& env = onnxruntime::python::GetEnv();
-  static ORTBackendsManager instance {env.GetLoggingManager()->DefaultLogger()};
-  return instance;
-}
-
-onnxruntime::ORTInvoker& GetORTInvoker(const at::Device device) {
-  return GetORTBackendsManager().GetInvoker(device);
-}
-
-onnxruntime::ORTInvoker& ORTBackendsManager::GetInvoker(const at::Device device) {
-  ORT_LOG_FN(device);
-
-  auto device_index = 0;
-  if (device.has_index()) {
-    device_index = device.index();
-  }
-
-  TORCH_CHECK(device.type() == at::DeviceType::ORT, "must be an ORT device");
-  TORCH_CHECK(device_index >= 0, "must have a valid index");
-
-  auto lookup = backends_.find(device.index());
-  if (lookup != backends_.end()) {
-    return *lookup->second;
-  }
-
-#ifdef USE_MSNPU
-  auto ep = onnxruntime::CreateMSNPU_ExecutionProvider();
-
-  onnxruntime::CustomRegistry customRegistry;
-  std::vector<ONNX_NAMESPACE::OpSchema> schemas; 
+static onnx::OpSchema CreateTransformerDecoderSchema() {
   onnx::OpSchema schema("TransformerDecoder", "" /* arbitrary filename */, 0 /* arbitrary line number */);
   schema.SetDomain(onnxruntime::kMSDomain);
   schema.SinceVersion(1 /* arbitrary */);
@@ -109,8 +66,54 @@ onnxruntime::ORTInvoker& ORTBackendsManager::GetInvoker(const at::Device device)
   schema.Attr("numHeads", "number of heads", ONNX_NAMESPACE::AttributeProto::INT, static_cast<int64_t>(8));
   schema.Attr("hiddenSize", "hidden size", ONNX_NAMESPACE::AttributeProto::INT, static_cast<int64_t>(512));
   schema.TypeConstraint("T", {"tensor(float)"}, "Constrain input and output types to float or bfloat16 tensors.");
-  schemas.push_back(schema);
-  auto status = customRegistry.RegisterOpSet(schemas, onnxruntime::kMSDomain, 1, 2);
+  return schema;
+}
+#endif
+
+//use the environment from python module
+namespace onnxruntime{
+namespace python{
+  onnxruntime::Environment& GetEnv();
+}
+}
+
+namespace torch_ort {
+namespace eager {
+
+using namespace onnxruntime;
+
+ORTBackendsManager& GetORTBackendsManager() {
+  auto& env = onnxruntime::python::GetEnv();
+  static ORTBackendsManager instance {env.GetLoggingManager()->DefaultLogger()};
+  return instance;
+}
+
+onnxruntime::ORTInvoker& GetORTInvoker(const at::Device device) {
+  return GetORTBackendsManager().GetInvoker(device);
+}
+
+onnxruntime::ORTInvoker& ORTBackendsManager::GetInvoker(const at::Device device) {
+  ORT_LOG_FN(device);
+
+  auto device_index = 0;
+  if (device.has_index()) {
+    device_index = device.index();
+  }
+
+  TORCH_CHECK(device.type() == at::DeviceType::ORT, "must be an ORT device");
+  TORCH_CHECK(device_index >= 0, "must have a valid index");
+
+  auto lookup = backends_.find(device.index());
+  if (lookup != backends_.end()) {
+    return *lookup->second;
+  }
+
+#ifdef USE_MSNPU
+  auto ep = onnxruntime::CreateMSNPU_ExecutionProvider();
+
+  // Register schemas for MSNPU ops
+  onnxruntime::CustomRegistry customRegistry;
+  auto status = customRegistry.RegisterOpSet({CreateTransformerDecoderSchema()}, onnxruntime::kMSDomain, 1, 2);
   if(!status.IsOK())
   {
       throw std::runtime_error("ORT return failure status:" + status.ErrorMessage());
