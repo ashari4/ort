@@ -65,7 +65,8 @@ ort_include_dirs = [
   os.path.join(ort_src_dir, 'cmake', 'external', 'protobuf', 'src'),
   os.path.join(ort_src_dir, 'cmake', 'external', 'nsync', 'public'),
   os.path.join(ort_src_dir, 'cmake', 'external', 'mp11', 'include'),
-  os.path.join(ort_build_dir, 'external', 'onnx')
+  os.path.join(ort_build_dir, 'external', 'onnx'),
+  os.path.join(ort_src_dir, 'cmake', 'external', 'optional-lite', 'include')
 ]
 
 ort_static_libs = [os.path.join(ort_build_dir, f'{l}.a') for l in [

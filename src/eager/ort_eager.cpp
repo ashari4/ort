@@ -5,6 +5,7 @@
 
 #include "ort_backends.h"
 #include "ort_log.h"
+#include "msnpu_ops.h"
 
 namespace torch_ort {
 namespace eager {
@@ -19,6 +20,10 @@ PYBIND11_MODULE(torch_ort, torch_ort_module) {
         THPDevice_New(at::Device(at::DeviceType::ORT, device_index)));
     },
     py::arg("device_index") = 0);
+
+    auto msnpu_module = torch_ort_module.def_submodule("msnpu");
+    msnpu_module.def("transformer_decoder", &torch_ort::eager::msnpu::transformer_decoder);
+    msnpu_module.def("transformer_decoder_grad", &torch_ort::eager::msnpu::transformer_decoder_grad);
 }
 
 } // namespace eager
