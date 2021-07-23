@@ -2,13 +2,29 @@
 // Licensed under the MIT License.
 
 #include <torch/extension.h>
-
+#include "torch/csrc/autograd/python_variable.h"
 #include "ort_backends.h"
 #include "ort_log.h"
 #include "msnpu_ops.h"
 
 namespace torch_ort {
 namespace eager {
+using namespace onnxruntime::training;
+
+py::object ORTTensor_toDLPack(const at::Tensor& data)
+{
+  OrtValue ort_value = create_ort_value(data);
+  return py::reinterpret_steal<py::object>(onnxruntime::dlpack::ToDlpack(ort_value));
+}
+
+at::Tensor ORTTensor_FromDLPack(const py::object& dlpack_tensor)
+{
+  OrtValue ort_value = onnxruntime::dlpack::FromDlpack(dlpack_tensor.ptr(), false);
+  return aten_tensor_from_ort(
+    std::move(ort_value),
+    at::TensorOptions()
+      .device(at::Device(at::DeviceType::ORT, 0)));
+}
 
 PYBIND11_MODULE(torch_ort, torch_ort_module) {
   ORT_LOG_DEBUG << "pybind11 module init";
@@ -20,6 +36,21 @@ PYBIND11_MODULE(torch_ort, torch_ort_module) {
         THPDevice_New(at::Device(at::DeviceType::ORT, device_index)));
     },
     py::arg("device_index") = 0);
+
+  onnxruntime::Environment& env = onnxruntime::python::GetEnv();
+
+  onnxruntime::python::addGlobalMethods(torch_ort_module, env);
+  onnxruntime::python::addObjectMethods(torch_ort_module, env);
+  onnxruntime::python::addOrtValueMethods(torch_ort_module);
+  onnxruntime::python::addIoBindingMethods(torch_ort_module);
+  onnxruntime::python::addObjectMethodsForTraining(torch_ort_module);
+  
+  torch_ort_module.def("ort_to_dlpack", [](at::Tensor data) {
+    return ORTTensor_toDLPack(data);
+  });
+  torch_ort_module.def("ort_from_dlpack", [](py::object dlpack_tensor) {
+    return ORTTensor_FromDLPack(dlpack_tensor);
+  });
 
     auto msnpu_module = torch_ort_module.def_submodule("msnpu");
     msnpu_module.def("transformer_decoder", &torch_ort::eager::msnpu::transformer_decoder);
