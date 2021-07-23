@@ -67,8 +67,10 @@ PYBIND11_MODULE(torch_ort, torch_ort_module) {
     return ORTTensor_FromDLPack(dlpack_tensor);
   });
 
+#ifdef USE_MSNPU
     auto msnpu_module = torch_ort_module.def_submodule("msnpu");
     msnpu_module.def("transformer_decoder", &torch_ort::eager::msnpu::transformer_decoder);
+#endif
 }
 
 } // namespace eager
