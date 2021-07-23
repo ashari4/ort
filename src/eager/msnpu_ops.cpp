@@ -23,7 +23,7 @@ std::vector<at::Tensor> transformer_decoder(
     const torch::Tensor& normalization_2_w,
     const torch::Tensor& normalization_2_b, const torch::Tensor& pad_values) {
 
-  auto &invoker = GetORTInvoker(embeddings_post_dropout.device());
+  auto& invoker = GetORTInvoker(embeddings_post_dropout.device());
   constexpr size_t num_outputs = 18;
   constexpr size_t num_attrs = 8;
   const  std::string ort_op_name = "TransformerDecoder";
