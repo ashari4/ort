@@ -62,7 +62,7 @@ onnxruntime::ORTInvoker& ORTBackendsManager::GetInvoker(const at::Device device)
   onnx::OpSchema schema("TransformerDecoder", "", 0);
   schema.SetDomain(onnxruntime::kMSDomain);
   schema.SinceVersion(1);
-  schema.SetDoc("Single Layer of Custom Transformer TNLG for MAIA");
+  schema.SetDoc("Single Layer of Custom Transformer TNLG");
   schema.Input(0, "X_0", "input embeddings", "T");
   schema.Input(1, "X_1", "normalization weight", "T");
   schema.Input(2, "X_2", "normalization bias", "T");
