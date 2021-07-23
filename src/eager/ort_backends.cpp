@@ -55,13 +55,10 @@ onnxruntime::ORTInvoker& ORTBackendsManager::GetInvoker(const at::Device device)
   auto ep = onnxruntime::CreateMSNPU_ExecutionProvider();
 
   onnxruntime::CustomRegistry customRegistry;
-
-  using namespace ONNX_NAMESPACE;
   std::vector<ONNX_NAMESPACE::OpSchema> schemas; 
-
-  onnx::OpSchema schema("TransformerDecoder", "", 0);
+  onnx::OpSchema schema("TransformerDecoder", "" /* arbitrary filename */, 0 /* arbitrary line number */);
   schema.SetDomain(onnxruntime::kMSDomain);
-  schema.SinceVersion(1);
+  schema.SinceVersion(1 /* arbitrary */);
   schema.SetDoc("Single Layer of Custom Transformer TNLG");
   schema.Input(0, "X_0", "input embeddings", "T");
   schema.Input(1, "X_1", "normalization weight", "T");
@@ -100,19 +97,18 @@ onnxruntime::ORTInvoker& ORTBackendsManager::GetInvoker(const at::Device device)
   schema.Output(15, "Y_15", "multilayer perceptron gelu", "T");
   schema.Output(16, "Y_16", "multilayer perceptron dropout mask", "T");
   schema.Output(17, "Y_17", "residual connection", "T");
-  schema.Attr("softDropoutProb", "softmax dropout probability", AttributeProto::FLOAT, 0.0f);
-  schema.Attr("denseDropoutProb", "dense dropout probability", AttributeProto::FLOAT, 0.0f);
-  schema.Attr("mlpDropoutProb", "MLP dropout probability", AttributeProto::FLOAT, 0.0f);
-  schema.Attr("paddedHiddenSize", "padded hidden size", AttributeProto::INT, static_cast<int64_t>(1024));
+  schema.Attr("softDropoutProb", "softmax dropout probability", ONNX_NAMESPACE::AttributeProto::FLOAT, 0.0f);
+  schema.Attr("denseDropoutProb", "dense dropout probability", ONNX_NAMESPACE::AttributeProto::FLOAT, 0.0f);
+  schema.Attr("mlpDropoutProb", "MLP dropout probability", ONNX_NAMESPACE::AttributeProto::FLOAT, 0.0f);
+  schema.Attr("paddedHiddenSize", "padded hidden size", ONNX_NAMESPACE::AttributeProto::INT, static_cast<int64_t>(1024));
   schema.Attr("headSize", "head size", AttributeProto::INT, static_cast<int64_t>(64));
-  schema.Attr("softDropoutSeed", "softmax dropout seed", AttributeProto::INT, static_cast<int64_t>(111));
-  schema.Attr("denseDropoutSeed", "dense layer dropout seed", AttributeProto::INT, static_cast<int64_t>(222));
-  schema.Attr("mlpDropoutSeed", "mlp dropout seed", AttributeProto::INT, static_cast<int64_t>(333));
-  schema.Attr("epsilon", "epsilon value", AttributeProto::FLOAT, 1e-5f);
-  schema.Attr("numHeads", "number of heads", AttributeProto::INT, static_cast<int64_t>(8));
-  schema.Attr("hiddenSize", "hidden size", AttributeProto::INT, static_cast<int64_t>(512));
-  schema.TypeConstraint("T", {"tensor(float)"}, "Constrain input and output types to float or bflat16 tensors.");
-
+  schema.Attr("softDropoutSeed", "softmax dropout seed", ONNX_NAMESPACE::AttributeProto::INT, static_cast<int64_t>(111));
+  schema.Attr("denseDropoutSeed", "dense layer dropout seed", ONNX_NAMESPACE::AttributeProto::INT, static_cast<int64_t>(222));
+  schema.Attr("mlpDropoutSeed", "mlp dropout seed", ONNX_NAMESPACE::AttributeProto::INT, static_cast<int64_t>(333));
+  schema.Attr("epsilon", "epsilon value", ONNX_NAMESPACE::AttributeProto::FLOAT, 1e-5f);
+  schema.Attr("numHeads", "number of heads", ONNX_NAMESPACE::AttributeProto::INT, static_cast<int64_t>(8));
+  schema.Attr("hiddenSize", "hidden size", ONNX_NAMESPACE::AttributeProto::INT, static_cast<int64_t>(512));
+  schema.TypeConstraint("T", {"tensor(float)"}, "Constrain input and output types to float or bfloat16 tensors.");
   schemas.push_back(schema);
   auto status = customRegistry.RegisterOpSet(schemas, onnxruntime::kMSDomain, 1, 2);
   if(!status.IsOK())

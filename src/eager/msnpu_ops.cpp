@@ -11,24 +11,25 @@ std::vector<at::Tensor> transformer_decoder(
     int64_t soft_dropout_seed, float dense_dropout_prob,
     int64_t dense_dropout_seed, float mlp_dropout_prob,
     int64_t mlp_dropout_seed, float epsilon,
-    const torch::Tensor &embeddings_post_dropout,
-    const torch::Tensor &normalization_1_w,
-    const torch::Tensor &normalization_1_b, const torch::Tensor &query_w,
-    const torch::Tensor &query_b, const torch::Tensor &key_w,
-    const torch::Tensor &key_b, const torch::Tensor &value_w,
-    const torch::Tensor &value_b, const torch::Tensor &attention_mask,
-    const torch::Tensor &project_w, const torch::Tensor &project_b,
-    const torch::Tensor &FFN1_w, const torch::Tensor &FFN1_b,
-    const torch::Tensor &FFN2_w, const torch::Tensor &FFN2_b,
-    const torch::Tensor &normalization_2_w,
-    const torch::Tensor &normalization_2_b, const torch::Tensor &pad_values) {
+    const torch::Tensor& embeddings_post_dropout,
+    const torch::Tensor& normalization_1_w,
+    const torch::Tensor& normalization_1_b, const torch::Tensor& query_w,
+    const torch::Tensor& query_b, const torch::Tensor& key_w,
+    const torch::Tensor& key_b, const torch::Tensor& value_w,
+    const torch::Tensor& value_b, const torch::Tensor& attention_mask,
+    const torch::Tensor& project_w, const torch::Tensor& project_b,
+    const torch::Tensor& FFN1_w, const torch::Tensor& FFN1_b,
+    const torch::Tensor& FFN2_w, const torch::Tensor& FFN2_b,
+    const torch::Tensor& normalization_2_w,
+    const torch::Tensor& normalization_2_b, const torch::Tensor& pad_values) {
 
   auto &invoker = GetORTInvoker(embeddings_post_dropout.device());
   constexpr size_t num_outputs = 18;
+  constexpr size_t num_attrs = 8;
   constexpr op_name = "TransformerDecoder";
 
   // Create ORT attributes
-  onnxruntime::NodeAttributes attrs(8);
+  onnxruntime::NodeAttributes attrs(num_attrs);
   attrs["paddedHiddenSize"] = create_ort_attribute(
       "paddedHiddenSize", padded_hidden_size, at::ScalarType::Long);
   attrs["headSize"] =
@@ -73,7 +74,6 @@ std::vector<at::Tensor> transformer_decoder(
   auto ort_in_pad_values = create_ort_value(invoker, pad_values);
 
   // Create ORTValues for output tensors.
-
   std::vector<OrtValue> ort_outputs(num_outputs);
 
   // Invoke the transformer decoder command on the ORT device
