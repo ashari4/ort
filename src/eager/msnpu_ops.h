@@ -5,9 +5,9 @@ namespace torch_ort {
 namespace eager {
 namespace msnpu {
 
-static const char * const TransformerDecoderName = "transformer_decoder";
+static const char * const TransformerDecoderName = "transformerdecoder";
 
-std::vector<at::Tensor> transformer_decoder(
+std::vector<at::Tensor> transformerdecoder(
     int64_t padded_hidden_size, int64_t head_size, float soft_dropout_prob,
     int64_t soft_dropout_seed, float dense_dropout_prob,
     int64_t dense_dropout_seed, float mlp_dropout_prob,
