@@ -69,7 +69,7 @@ PYBIND11_MODULE(torch_ort, torch_ort_module) {
 #ifdef USE_MSNPU
     #include "msnpu_ops.h"
     auto msnpu_module = torch_ort_module.def_submodule("msnpu");
-    msnpu_module.def(torch_ort::msnpu::eager::TransfomerDecoderName, &torch_ort::eager::msnpu::transformer_decoder);
+    msnpu_module.def(torch_ort::eager::msnpu::TransfomerDecoderName, &torch_ort::eager::msnpu::transformer_decoder);
 #endif
 }
 

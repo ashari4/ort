@@ -26,7 +26,7 @@ std::vector<at::Tensor> transformer_decoder(
   auto &invoker = GetORTInvoker(embeddings_post_dropout.device());
   constexpr size_t num_outputs = 18;
   constexpr size_t num_attrs = 8;
-  constexpr op_name = "TransformerDecoder";
+  const  std::string ort_op_name = "TransformerDecoder";
 
   // Create ORT attributes
   onnxruntime::NodeAttributes attrs(num_attrs);
@@ -78,7 +78,7 @@ std::vector<at::Tensor> transformer_decoder(
 
   // Invoke the transformer decoder command on the ORT device
   auto status = invoker.Invoke(
-      op_name,
+      ort_op_name,
       {ort_in_embeddings_post_dropout, ort_in_normalization_1_w,
        ort_in_normalization_1_b, ort_in_query_w, ort_in_query_b, ort_in_key_w,
        ort_in_key_b, ort_in_value_w, ort_in_value_b, ort_in_attention_mask,

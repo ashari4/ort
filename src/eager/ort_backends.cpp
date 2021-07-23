@@ -64,7 +64,7 @@ static onnx::OpSchema CreateTransformerDecoderSchema() {
   schema.Attr("denseDropoutProb", "dense dropout probability", ONNX_NAMESPACE::AttributeProto::FLOAT, 0.0f);
   schema.Attr("mlpDropoutProb", "MLP dropout probability", ONNX_NAMESPACE::AttributeProto::FLOAT, 0.0f);
   schema.Attr("paddedHiddenSize", "padded hidden size", ONNX_NAMESPACE::AttributeProto::INT, static_cast<int64_t>(1024));
-  schema.Attr("headSize", "head size", AttributeProto::INT, static_cast<int64_t>(64));
+  schema.Attr("headSize", "head size", ONNX_NAMESPACE::AttributeProto::INT, static_cast<int64_t>(64));
   schema.Attr("softDropoutSeed", "softmax dropout seed", ONNX_NAMESPACE::AttributeProto::INT, static_cast<int64_t>(111));
   schema.Attr("denseDropoutSeed", "dense layer dropout seed", ONNX_NAMESPACE::AttributeProto::INT, static_cast<int64_t>(222));
   schema.Attr("mlpDropoutSeed", "mlp dropout seed", ONNX_NAMESPACE::AttributeProto::INT, static_cast<int64_t>(333));
@@ -119,7 +119,8 @@ onnxruntime::ORTInvoker& ORTBackendsManager::GetInvoker(const at::Device device)
 
   // Register schemas for MSNPU ops
   onnxruntime::CustomRegistry customRegistry;
-  auto status = customRegistry.RegisterOpSet({CreateTransformerDecoderSchema()}, onnxruntime::kMSDomain, BaselineOpsetVersion, OpsetVersion);
+  std::vector<onnx::OpSchema> schemas{CreateTransformerDecoderSchema()};
+  auto status = customRegistry.RegisterOpSet(schemas, onnxruntime::kMSDomain, BaselineOpsetVersion, OpsetVersion);
   if(!status.IsOK())
   {
       throw std::runtime_error("ORT return failure status:" + status.ErrorMessage());
