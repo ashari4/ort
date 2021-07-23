@@ -34,12 +34,6 @@ std::vector<at::Tensor> transformer_decoder(
   const torch::Tensor& normalization_2_w,
   const torch::Tensor& normalization_2_b,
   const torch::Tensor& pad_values);
-
-std::vector<at::Tensor> transformer_decoder_grad(
-    torch::Tensor input_ids,
-    torch::Tensor position_ids,
-    torch::Tensor attention_mask);
-
 }
 }
 }

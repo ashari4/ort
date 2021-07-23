@@ -2,8 +2,6 @@
 #include "ort_aten.h"
 #include "ort_backends.h"
 
-#include <iostream>
-
 namespace torch_ort {
 namespace eager {
 namespace msnpu {
@@ -38,9 +36,10 @@ std::vector<at::Tensor> transformer_decoder(
   const torch::Tensor& normalization_2_b,
   const torch::Tensor& pad_values) {
   
-  std::cout << "In transformer_decoder C++ op" << std::endl;
-
   auto& invoker = GetORTInvoker(embeddings_post_dropout.device());
+  constexpr size_t num_outputs = 18;
+  constexpr op_name = "TransformerDecoder";
+
   
   // Create ORT attributes
   onnxruntime::NodeAttributes attrs(8);
@@ -77,13 +76,13 @@ std::vector<at::Tensor> transformer_decoder(
   auto ort_in_normalization_2_b = create_ort_value(invoker, normalization_2_b);   
   auto ort_in_pad_values = create_ort_value(invoker, pad_values);   
 
-  std::vector<OrtValue> ort_outputs(18);
+  // Create ORTValues for output tensors.
+  
+  std::vector<OrtValue> ort_outputs(num_outputs);
 
-  // Create ORTValues for output tensors
-  // TODO: 0000 Invoke the kernel 
-  // torch::empty({})
+  // Invoke the transformer decoder command on the ORT device
   auto status = invoker.Invoke(
-    "TransformerDecoder", {
+    op_name, {
       ort_in_embeddings_post_dropout,
       ort_in_normalization_1_w,
       ort_in_normalization_1_b, 
@@ -107,34 +106,20 @@ std::vector<at::Tensor> transformer_decoder(
       ort_outputs, &attrs, onnxruntime::kMSDomain);
     
     if (!status.IsOK())
+    {
       throw std::runtime_error(
-        "ORT return failure status:" + status.ErrorMessage());
+        "ORT returned a failure status: " + status.ErrorMessage());      
+    }
 
-  std::vector<at::Tensor> outputs(18);
-  for (uint32_t i = 0; i < 18; i++)
+  // Transform outputs into torch tensors
+  std::vector<at::Tensor> outputs(num_outputs);
+  for (size_t i = 0; i < num_outputs; i++)
   {
     outputs[i] =   aten_tensor_from_ort(std::move(ort_outputs[i]), embeddings_post_dropout.options());
   }
 
   return outputs;
 }
-
-
-std::vector<at::Tensor> transformer_decoder_grad(
-    torch::Tensor input_ids,
-    torch::Tensor position_ids,
-    torch::Tensor attention_mask) {
-  
-  // TODO: 0000
-  torch::Tensor loss;
-  torch::Tensor output;
-
-  std::cout << "In transformer_decoder_grad C++ op" << std::endl;
-
-  return {loss, output};
-}
-
-
 }
 }
 }
