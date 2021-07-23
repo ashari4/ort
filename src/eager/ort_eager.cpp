@@ -9,6 +9,7 @@
 #include "orttraining/core/framework/ortmodule_graph_builder.h"
 #include "python/onnxruntime_pybind_state_common.h"
 #include "core/dlpack/dlpack_python.h"
+#include "msnpu_ops.h"
 
 namespace onnxruntime{
 namespace python{
@@ -67,7 +68,6 @@ PYBIND11_MODULE(torch_ort, torch_ort_module) {
   });
 
 #ifdef USE_MSNPU
-    #include "msnpu_ops.h"
     auto msnpu_module = torch_ort_module.def_submodule("msnpu");
     msnpu_module.def(torch_ort::eager::msnpu::TransfomerDecoderName, &torch_ort::eager::msnpu::transformer_decoder);
 #endif
