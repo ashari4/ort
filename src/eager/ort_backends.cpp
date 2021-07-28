@@ -7,7 +7,7 @@
 #include "ort_backends.h"
 #include "ort_log.h"
 
-#ifdef USE_MSNPU
+//#ifdef USE_MSNPU
   namespace onnxruntime {
     std::unique_ptr<onnxruntime::IExecutionProvider> CreateMSNPU_ExecutionProvider();
   }
@@ -74,7 +74,68 @@ static onnx::OpSchema CreateTransformerDecoderSchema() {
   schema.TypeConstraint("T", {"tensor(float)"}, "Constrain input and output types to float or bfloat16 tensors.");
   return schema;
 }
-#endif
+
+static onnx::OpSchema CreateTransformerDecoderGradSchema() {
+  onnx::OpSchema schema("TransformerDecoderGrad", "" /* arbitrary filename */, 0 /* arbitrary line number */);
+  schema.SetDomain(onnxruntime::kMSDomain);
+  schema.SinceVersion(BaselineOpsetVersion);
+  schema.SetSupportLevel(OpSchema::SupportType::EXPERIMENTAL);
+  schema.SetDoc("Backward Pass Node for Single Layer of Custom Transformer TNLG")
++      .AllowUncheckedAttributes()
++      .Input(0, "normalization weight 1", "input to transformer.", "T")
++      .Input(1, "query weight", "input to transformer.", "T")
++      .Input(2, "key weight", "input to transformer.", "T")
++      .Input(3, "value weight", "input to transformer.", "T")
++      .Input(4, "attention mask", "input to transformer.", "T")
++      .Input(5, "project weight", "input to transformer.", "T")
++      .Input(6, "feedforward neural network 1", "input to transformer.", "T")
++      .Input(7, "feedforward neural network 2", "input to transformer.", "T")
++      .Input(8, "normalization weight 2", "input to transformer.", "T")
++      .Input(9, "pad values", "input to transformer.", "T")
++      .Input(10, "Y0 gradient", "gradient tensor from output.", "T")
++      .Input(11, "layer norm", "output of transformer.", "T")
++      .Input(12, "std inv DMemAddr", "output of transformer..", "T")
++      .Input(13, "shift DMemAddr", "output of transformer.", "T")
++      .Input(14, "query DMem", "output of transformer.", "T")
++      .Input(15, "key DMem", "output of transformer.", "T")
++      .Input(16, "value DMem", "output of transformer.", "T")
++      .Input(17, "softmax DMem", "output of transformer.", "T")
++      .Input(18, "soft dropout DMem", "output of transformer.", "T")
++      .Input(19, "soft dropout mask DMem", "output of transformer.", "T")
++      .Input(20, "vsoft DMem", "output of transformer.", "T")
++      .Input(21, "dense dropout mask DMem", "output of transformer.", "T")
++      .Input(22, "post selfattention layer norm", "output of transformer.", "T")
++      .Input(23, "normalization std inv DMemAddr", "output of transformer.", "T")
++      .Input(24, "normalization shift DMemAddr", "output of transformer.", "T")
++      .Input(25, "multilayer perceptron dense", "output of transformer.", "T")
++      .Input(26, "multilayer perceptron gelu", "output of transformer.", "T")
++      .Input(27, "multilayer perceptron dropout mask", "output of transformer.", "T")
++      .Output(0, "normalization weight grad 1", "gradient of weight.", "T")
++      .Output(1, "normalization bias grad 1", "gradient of bias.", "T")
++      .Output(2, "query weight grad", "gradient of weight.", "T")
++      .Output(3, "query bias grad", "gradient of bias.", "T")
++      .Output(4, "key weight grad", "gradient of weight.", "T")
++      .Output(5, "key bias grad", "gradient of bias.", "T")
++      .Output(6, "value weight grad", "gradient of weight.", "T")
++      .Output(7, "value bias grad", "gradient of bias.", "T")
++      .Output(8, "attention dense weight", "gradient of weight.", "T")
++      .Output(9, "dense bias grad", "gradient of bias.", "T")
++      .Output(10, "multilayer perceptron dense weight 1", "gradient of weight.", "T")
++      .Output(11, "multilayer perceptron bias grad 1", "gradient of bias.", "T")
++      .Output(12, "multilayer perceptron dense weight 2", "gradient of weight.", "T")
++      .Output(13, "multilayer perceptron bias grad 2", "gradient of bias.", "T")
++      .Output(14, "normalization weight grad 2", "gradient of weight.", "T")
++      .Output(15, "normalization bias grad 2", "gradient of bias.", "T")
++      .Output(16, "output grad", "gradient of the input.", "T")
++      .Attr("paddedHiddenSize", "padded hidden size", AttributeProto::INT, static_cast<int64_t>(1024))
++      .Attr("headSize", "head size", AttributeProto::INT, static_cast<int64_t>(64))
++      .Attr("numHeads", "number of heads", AttributeProto::INT, static_cast<int64_t>(8))  
+
+
+
+  return schema;
+}
+//#endif
 
 //use the environment from python module
 namespace onnxruntime{

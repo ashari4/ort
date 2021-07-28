@@ -101,6 +101,112 @@ std::vector<at::Tensor> transformerdecoder(
 
   return outputs;
 }
+
+std::vector<at::Tensor>  transformerdecodergrad(
+    int64_t padded_hidden_size, int64_t head_size, int64_t num_heads, torch::Tensor norm_1_weight,
+                                     torch::Tensor q_weight,
+                                     Tensor k_weight,
+                                     Tensor v_weight,
+                                     Tensor attention_mask,
+                                     Tensor dense_weight,
+                                     Tensor mlp_weight_0,
+                                     Tensor mlp_weight_1,
+                                     Tensor norm_2_weight,
+                                     Tensor pad_values,
+                                     Tensor grad_input,
+                                     Tensor norm_1_dmem,
+                                     Tensor norm_1_std_inv_dmem,
+                                     Tensor norm_1_shift_dmem,
+                                     Tensor q_dmem,
+                                     Tensor k_dmem,
+                                     Tensor v_dmem,
+                                     Tensor softmax_dmem,
+                                     Tensor soft_dropout_dmem,
+                                     Tensor soft_dropout_mask_dmem,
+                                     Tensor v_soft_dmem,
+                                     Tensor dense_dropout_mask_dmem,
+                                     Tensor norm_2_dmem,
+                                     Tensor norm_2_std_inv_dmem,
+                                     Tensor norm_2_shift_dmem,
+                                     Tensor mlp_hidden_1_dmem,
+                                     Tensor mlp_gelu_dmem,
+                                     Tensor mlp_dropout_mask_dmem)
+{
+  auto& invoker = GetORTInvoker(embeddings_post_dropout.device());
+  const  std::string ort_op_name = "TransformerDecoderGrad";
+
+  // Create ORT attributes
+  onnxruntime::NodeAttributes attrs(num_attrs);
+  attrs["paddedHiddenSize"] = create_ort_attribute(
+      "paddedHiddenSize", padded_hidden_size, at::ScalarType::Long);
+  attrs["headSize"] =
+      create_ort_attribute("headSize", head_size, at::ScalarType::Long);
+  attrs["numHeads"] = create_ort_attribute(
+      "numHeads", num_heads, at::ScalarType::Long);
+
+  // Create ORTValues for input tensors
+  auto ort_in_norm_1_weight =
+      create_ort_value(invoker, norm_1_weight);
+  auto ort_in_q_weight = create_ort_value(invoker, q_weight);
+  auto ort_in_k_weight = create_ort_value(invoker, k_weight);
+  auto ort_in_v_weight = create_ort_value(invoker, v_weight);
+  auto ort_in_attention_mask = create_ort_value(invoker, attention_mask);
+  auto ort_in_dense_weight = create_ort_value(invoker, dense_weight);
+  auto ort_in_mlp_weight_0 = create_ort_value(invoker, mlp_weight_0);
+  auto ort_in_mlp_weight_1 = create_ort_value(invoker, mlp_weight_1);
+  auto ort_in_norm_2_weight = create_ort_value(invoker, norm_2_weight);
+  auto ort_in_pad_values = create_ort_value(invoker, pad_values);
+  auto ort_in_grad_input = create_ort_value(invoker, grad_input);
+  auto ort_in_norm_1_dmem = create_ort_value(invoker, norm_1_dmem);
+  auto ort_in_norm_1_std_inv_dmem = create_ort_value(invoker, norm_1_std_inv_dmem);
+  auto ort_in_norm_1_shift_dmem = create_ort_value(invoker, norm_1_shift_dmem);
+  auto ort_in_q_dmem = create_ort_value(invoker, q_dmem);
+  auto ort_in_k_dmem = create_ort_value(invoker, k_dmem);
+  auto ort_in_v_dmem = create_ort_value(invoker, v_dmem);
+  auto ort_in_softmax_dmem = create_ort_value(invoker, softmax_dmem);
+  auto ort_in_soft_dropout_dmem = create_ort_value(invoker, soft_dropout_dmem);
+  auto ort_in_soft_dropout_mask_dmem = create_ort_value(invoker, soft_dropout_mask_dmem);
+  auto ort_in_v_soft_dmem = create_ort_value(invoker, v_soft_dmem);
+  auto ort_in_dense_dropout_mask_dmem = create_ort_value(invoker, dense_dropout_mask_dmem);
+  auto ort_in_norm_2_dmem = create_ort_value(invoker, norm_2_dmem);
+  auto ort_in_norm_2_std_inv_dmem = create_ort_value(invoker, norm_2_std_inv_dmem);
+  auto ort_in_norm_2_shift_dmem = create_ort_value(invoker, norm_2_shift_dmem);
+  auto ort_in_mlp_hidden_1_dmem = create_ort_value(invoker, mlp_hidden_1_dmem);
+  auto ort_in_mlp_gelu_dmem = create_ort_value(invoker, mlp_gelu_dmem);
+  auto ort_in_mlp_dropout_mask_dmem = create_ort_value(invoker, mlp_dropout_mask_dmem);
+
+  // Create ORTValues for output tensors.
+  constexpr size_t num_outputs = std::tuple_size<transformer_decoder_grad_out_list>;
+  std::vector<OrtValue> ort_outputs(num_outputs);
+
+  // Invoke the transformer decoder command on the ORT device
+  auto status = invoker.Invoke(
+      ort_op_name,
+      {ort_in_embeddings_post_dropout, ort_in_normalization_1_w,
+       ort_in_normalization_1_b, ort_in_query_w, ort_in_query_b, ort_in_key_w,
+       ort_in_key_b, ort_in_value_w, ort_in_value_b, ort_in_attention_mask,
+       ort_in_project_w, ort_in_project_b, ort_in_FFN1_w, ort_in_FFN1_b,
+       ort_in_FFN2_w, ort_in_FFN2_b, ort_in_normalization_2_w,
+       ort_in_normalization_2_b, ort_in_pad_values},
+      ort_outputs, &attrs, onnxruntime::kMSDomain);
+
+  if (!status.IsOK()) {
+    throw std::runtime_error("ORT returned a failure status: " +
+                             status.ErrorMessage());
+  }
+
+  // Transform outputs into torch tensors
+  std::vector<at::Tensor> outputs(num_outputs);
+  for (size_t i = 0; i < num_outputs; i++) {
+    outputs[i] = aten_tensor_from_ort(std::move(ort_outputs[i]),
+                                      embeddings_post_dropout.options());
+  }
+
+  return outputs;
+}
+
+
+
 } // namespace msnpu
 } // namespace eager
 } // namespace torch_ort
