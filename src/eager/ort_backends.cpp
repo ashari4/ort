@@ -7,7 +7,7 @@
 #include "ort_backends.h"
 #include "ort_log.h"
 
-//#ifdef USE_MSNPU
+#ifdef USE_MSNPU
   namespace onnxruntime {
     std::unique_ptr<onnxruntime::IExecutionProvider> CreateMSNPU_ExecutionProvider();
   }
@@ -132,7 +132,7 @@ static onnx::OpSchema CreateTransformerDecoderGradSchema() {
   schema.Attr("numHeads", "number of heads", ONNX_NAMESPACE::AttributeProto::INT, static_cast<int64_t>(8))  ;
   return schema;
 }
-//#endif
+#endif
 
 //use the environment from python module
 namespace onnxruntime{
